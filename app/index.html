@@ -9,6 +9,8 @@
   <body>
     <div id="app">
 
+      <button id="btn-edit-config" title="Edit blind levels">⚙</button>
+
       <header>
         <h1>Poker Blinds Timer</h1>
         <div class="session-info">
@@ -19,10 +21,8 @@
       </header>
 
       <main>
-
         <section class="timer-section">
 
-          <!-- Clock ring with blinds + countdown overlaid inside -->
           <div class="clock-wrapper">
             <svg class="clock-svg" viewBox="0 0 200 200" aria-hidden="true">
               <circle class="clock-track"    cx="100" cy="100" r="85"/>
@@ -40,24 +40,41 @@
               </div>
               <div class="controls">
                 <button id="btn-start-pause" class="full-width">Start</button>
-                <button id="btn-reset">Reset</button>
-                <button id="btn-next">Next Round</button>
+                <button id="btn-prev">←</button>
+                <button id="btn-reset">New Game</button>
+                <button id="btn-next">→</button>
               </div>
             </div>
           </div>
 
         </section>
-
-        <section class="rounds-section">
-          <table class="rounds-table">
-            <thead>
-              <tr><th>#</th><th>Small</th><th>Big</th><th>Minutes</th></tr>
-            </thead>
-            <tbody id="rounds-tbody"></tbody>
-          </table>
-        </section>
-
       </main>
+
+      <!-- Settings overlay (hidden by default) -->
+      <div id="settings-overlay" hidden>
+        <div class="settings-panel">
+          <div class="settings-header">
+            <span class="section-title">Blind Levels</span>
+            <button id="btn-cancel-config">✕</button>
+          </div>
+          <table class="rounds-table edit-table">
+            <thead>
+              <tr><th>#</th><th>Small</th><th>Big</th><th>Min</th><th></th></tr>
+            </thead>
+            <tbody id="edit-tbody"></tbody>
+          </table>
+          <button id="btn-add-level">+ Add Level</button>
+          <div class="voice-row">
+            <label for="voice-select">Voice</label>
+            <select id="voice-select"></select>
+            <button id="btn-voice-preview" title="Preview voice">▶</button>
+          </div>
+          <div class="edit-footer">
+            <button id="btn-reset-config">Defaults</button>
+            <button id="btn-save-config">Save</button>
+          </div>
+        </div>
+      </div>
 
     </div>
     <script type="module" src="/src/main.ts"></script>

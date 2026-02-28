@@ -8,7 +8,7 @@ Ways of working:
 - We use MILESTONES.md to organise the high level features
 - We use TODOS.md to break down the milestones into tasks
 
-We will plan the work for the milestones and add them to a TODO.md file which will have a checklist so we can check the progress.
+We will plan the work for the milestones and add them to a TODOS.md file which will have a checklist so we can check the progress.
 
 Lets keep the Milestones in MILESTONES.md.
 Lets keep the Todos in TODOS.md

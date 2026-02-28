@@ -26,6 +26,8 @@
 - [x] Button label: Start / Resume / Pause based on state
 - [x] "Current Blinds" label above blind values inside the circle
 - [x] "Time Remaining" label above countdown inside the circle
+- [x] Next Round button disabled on the final round
+- [x] Previous Round button (left of Reset); disabled while running or on round 1
 
 ## Milestone 2 — Audio
 
@@ -36,13 +38,18 @@
 
 ## Milestone 3 — Configuration UI
 
-- [ ] Blind levels editor (add / remove / reorder)
-- [ ] Round duration editor per level
-- [ ] Persist config to localStorage
+- [x] Blind levels editor (add / remove / reorder)
+- [x] Round duration editor per level
+- [x] Voice selector (lists browser-available speech voices)
+- [x] Persist config to localStorage
 
 ## Milestone 4 — Polish
 
 - [x] Buttons inside the clock ring must not visually touch the ring border
+- [x] Rename Reset → "New Game"; style ← / → nav buttons as ghost arrow icons
+- [x] Final round freezes at 0:00 instead of entering a dead "finished" state
+- [x] 1-minute warning uses ≤ 60 s check to survive skipped timer ticks (browser throttle)
+- [x] Timer as full-screen main focus; gear button opens settings overlay
 - [ ] Responsive mobile layout
 
 ## Milestone 5 — Deploy

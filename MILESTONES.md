@@ -29,7 +29,7 @@ Single-page poker blinds timer with all core features running in the browser.
 - Multi-game session support (track game number within a session)
 
 ### Button / announcement rules
-- Reset is disabled while the timer is running
+- Reset is disabled while the timer is running, and also when there is nothing to reset (idle, round 1, full time remaining)
 - Pressing Reset does not trigger any audio announcement
 - Start/Pause toggle label: "Start" when idle, "Resume" when paused, "Pause" when running
 - Inside the circle: small "Current Blinds" label above the blind values
@@ -47,9 +47,14 @@ Single-page poker blinds timer with all core features running in the browser.
 - Audio announcement when blinds increase
 
 ## Milestone 3 - Configuration UI
-- Edit blind levels in-browser (add/remove/reorder rows)
+- Edit blind levels in-browser (add/remove/reorder rows); edit form has Cancel, Reset to defaults, and Save buttons
 - Ability to set round durations
-- Allow the user to change the voice based on what the browser supports
+- Allow the user to change the voice based on what the browser supports (filter to en-GB and en-US only); voices grouped into "American" and "British" optgroups; locale prefix stripped from name, friendly label appended e.g. "Robosoft6 (American)"
+- Voice dropdown must not overflow its container
+- Voice selector lives inside the edit panel (only visible when editing)
+- Preview button to the right of the dropdown: speaks a test phrase
+- Changing the voice auto-speaks the test phrase
+- While speaking, preview button shows a "playing" state and can be clicked to stop
 - Save configuration to localStorage
 
 ## Milestone 4 - Polish

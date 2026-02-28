@@ -11,8 +11,8 @@ body {
   background-attachment: fixed;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
+  align-items: stretch;
+  padding: 0;
 }
 
 /* Subtle felt texture overlay */
@@ -36,13 +36,20 @@ body::before {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 620px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Header ───────────────────────────────────────────── */
+main {
+  flex: 1;
+  display: flex;
+}
+
 header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  padding: 1.25rem 1rem 0;
 }
 
 header h1 {
@@ -70,13 +77,21 @@ section {
   backdrop-filter: blur(4px);
 }
 
-/* ── Timer section ────────────────────────────────────── */
+/* ── Timer section — fills viewport, no panel chrome ─── */
 .timer-section {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0;
   padding: 0;
+  /* override the generic section panel look */
+  background: none;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  backdrop-filter: none;
 }
 
 /* ── Clock ring ───────────────────────────────────────── */
@@ -183,7 +198,7 @@ section {
 /* ── Controls — inside the clock ring ─────────────────── */
 .controls {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
   width: 100%;
   margin-top: 0.3rem;
@@ -211,14 +226,217 @@ button:disabled   { opacity: 0.35; cursor: not-allowed; }
 #btn-start-pause.running              { background: #e65100; }
 #btn-start-pause.running:hover:not(:disabled) { background: #ef6c00; }
 
+#btn-prev, #btn-next {
+  background: transparent;
+  border-color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+  font-size: 1.1rem;
+  padding: 0.4rem 0.25rem;
+}
+#btn-prev:hover:not(:disabled),
+#btn-next:hover:not(:disabled) {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.85);
+}
+
 #btn-reset { background: #37474f; }
 #btn-reset:hover:not(:disabled) { background: #455a64; }
 
-#btn-next  { background: #1565c0; }
-#btn-next:hover:not(:disabled)  { background: #1976d2; }
+/* ── Gear / settings button (top-right) ───────────────── */
+#btn-edit-config {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  font-size: 1.2rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+#btn-edit-config:hover:not(:disabled) { background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.95); }
+#btn-edit-config:disabled             { opacity: 0.35; cursor: not-allowed; }
 
-/* ── Rounds table ─────────────────────────────────────── */
-.rounds-section { padding: 1rem 1.5rem; }
+/* ── Settings overlay ─────────────────────────────────── */
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+#settings-overlay:not([hidden]) { display: flex; }
+
+.settings-panel {
+  background: rgba(15,42,16,0.97);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  width: min(480px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fb88a;
+}
+
+#btn-cancel-config {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 5px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+#btn-cancel-config:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
+
+/* ── Edit table ────────────────────────────────────────── */
+.edit-table input[type="number"] {
+  width: 5rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: #d4e8cc;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.85rem;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+.edit-table input[type="number"]::-webkit-inner-spin-button,
+.edit-table input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.row-actions {
+  display: flex;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.btn-row-action {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  color: #d4e8cc;
+  transition: background 0.15s;
+}
+.btn-row-action:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
+.btn-row-action:disabled             { opacity: 0.3; cursor: not-allowed; }
+.btn-delete:hover:not(:disabled)     { background: rgba(229,57,53,0.35); }
+
+#btn-add-level {
+  margin-top: 0.6rem;
+  width: 100%;
+  padding: 0.4rem;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 5px;
+  cursor: pointer;
+  color: #8fb88a;
+  transition: background 0.15s;
+}
+#btn-add-level:hover { background: rgba(255,255,255,0.06); }
+
+.edit-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 0.75rem;
+}
+
+#btn-reset-config {
+  flex: 1;
+  padding: 0.4rem;
+  font-size: 0.82rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  color: #d4e8cc;
+  transition: background 0.15s;
+}
+#btn-reset-config:hover { background: rgba(255,255,255,0.13); }
+
+#btn-save-config {
+  flex: 1;
+  padding: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #2e7d32;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.15s;
+}
+#btn-save-config:hover { background: #388e3c; }
+
+/* ── Voice selector ────────────────────────────────────── */
+.voice-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.8rem;
+  color: #8fb88a;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#voice-select {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 5px;
+  color: #d4e8cc;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#btn-voice-preview {
+  flex-shrink: 0;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 5px;
+  cursor: pointer;
+  color: #d4e8cc;
+  transition: background 0.15s;
+}
+#btn-voice-preview:hover    { background: rgba(255,255,255,0.14); }
+#btn-voice-preview.playing  { background: rgba(229,57,53,0.3); border-color: rgba(229,57,53,0.5); color: #ef9a9a; }
 
 .rounds-table {
   width: 100%;
