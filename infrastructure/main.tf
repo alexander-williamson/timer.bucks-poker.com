@@ -20,7 +20,7 @@ resource "cloudflare_pages_project" "timer" {
 
   build_config {
     build_command   = "bun run build"
-    destination_dir = "app/dist"
+    destination_dir = "dist"
     root_dir        = "/"
   }
 }

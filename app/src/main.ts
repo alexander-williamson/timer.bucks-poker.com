@@ -31,26 +31,29 @@ let gameNumber: number     = 1
 let warningFired: boolean  = false
 let intervalId: number | null = null
 
+// Queued blind announcement: fires on next Start, not immediately.
+// True on fresh game start (idle) and after Next Round is pressed.
+let pendingBlindAnnouncement: boolean = true
+
 // ── DOM refs ─────────────────────────────────────────────────────────────────
 
-const elGameNumber   = document.getElementById('game-number')!
-const elRoundNumber  = document.getElementById('round-number')!
-const elTotalRounds  = document.getElementById('total-rounds')!
-const elSmallBlind   = document.getElementById('small-blind')!
-const elBigBlind     = document.getElementById('big-blind')!
-const elNextBlinds   = document.getElementById('next-blinds')!
-const elNextSmall    = document.getElementById('next-small')!
-const elNextBig      = document.getElementById('next-big')!
-const elCountdown    = document.getElementById('countdown')!
+const elGameNumber    = document.getElementById('game-number')!
+const elRoundNumber   = document.getElementById('round-number')!
+const elTotalRounds   = document.getElementById('total-rounds')!
+const elSmallBlind    = document.getElementById('small-blind')!
+const elBigBlind      = document.getElementById('big-blind')!
+const elNextBlinds    = document.getElementById('next-blinds')!
+const elNextSmall     = document.getElementById('next-small')!
+const elNextBig       = document.getElementById('next-big')!
+const elCountdown     = document.getElementById('countdown')!
 const elClockProgress = document.getElementById('clock-progress') as unknown as SVGCircleElement
 
 const CIRCUMFERENCE = 2 * Math.PI * 85  // 534.07
 
-const elTbody        = document.getElementById('rounds-tbody')!
-const btnStart       = document.getElementById('btn-start')  as HTMLButtonElement
-const btnPause       = document.getElementById('btn-pause')  as HTMLButtonElement
-const btnReset       = document.getElementById('btn-reset')  as HTMLButtonElement
-const btnNext        = document.getElementById('btn-next')   as HTMLButtonElement
+const elTbody       = document.getElementById('rounds-tbody')!
+const btnStartPause = document.getElementById('btn-start-pause') as HTMLButtonElement
+const btnReset      = document.getElementById('btn-reset')       as HTMLButtonElement
+const btnNext       = document.getElementById('btn-next')        as HTMLButtonElement
 
 // ── Audio ────────────────────────────────────────────────────────────────────
 
@@ -89,6 +92,11 @@ function speak(text: string) {
   window.speechSynthesis.speak(utt)
 }
 
+function announceCurrentBlinds() {
+  const cur = rounds[roundIndex]
+  speak(`Blinds are ${cur.small} and ${cur.big}.`)
+}
+
 function announceWarning() {
   const next = rounds[roundIndex + 1]
   if (!next) return
@@ -120,8 +128,8 @@ function renderRoundsTable() {
 }
 
 function renderUI() {
-  const cur  = rounds[roundIndex]
-  const next = rounds[roundIndex + 1]
+  const cur   = rounds[roundIndex]
+  const next  = rounds[roundIndex + 1]
   const total = cur.minutes * 60
 
   elGameNumber.textContent  = String(gameNumber)
@@ -147,8 +155,10 @@ function renderUI() {
   }
 
   // Buttons
-  btnStart.disabled = status === 'running' || status === 'finished'
-  btnPause.disabled = status !== 'running'
+  btnStartPause.disabled    = status === 'finished'
+  btnStartPause.textContent = status === 'running' ? 'Pause' : status === 'paused' ? 'Resume' : 'Start'
+  btnStartPause.classList.toggle('running', status === 'running')
+  btnReset.disabled = status === 'running'
   btnNext.disabled  = status === 'finished'
 
   renderRoundsTable()
@@ -174,11 +184,10 @@ function tick() {
 function advanceRound() {
   if (roundIndex < rounds.length - 1) {
     roundIndex++
-    timeLeft      = rounds[roundIndex].minutes * 60
-    warningFired  = false
-    announceIncrease()
+    timeLeft     = rounds[roundIndex].minutes * 60
+    warningFired = false
+    announceIncrease()  // automatic advance always announces immediately
   } else {
-    // Final round finished
     stopTimer()
     status = 'finished'
     speak('The game is over. Well played!')
@@ -199,31 +208,35 @@ function stopTimer() {
 
 // ── Button handlers ───────────────────────────────────────────────────────────
 
-btnStart.addEventListener('click', () => {
-  // Resume AudioContext on first user gesture
+btnStartPause.addEventListener('click', () => {
   if (audioCtx.state === 'suspended') audioCtx.resume()
 
-  status = 'running'
-  startTimer()
-  playStart()
-  renderUI()
-})
-
-btnPause.addEventListener('click', () => {
-  status = 'paused'
-  stopTimer()
-  playPause()
+  if (status === 'running') {
+    status = 'paused'
+    stopTimer()
+    playPause()
+  } else {
+    status = 'running'
+    startTimer()
+    playStart()
+    // Announce current blinds if this is a fresh start or after Next was pressed
+    if (pendingBlindAnnouncement) {
+      announceCurrentBlinds()
+      pendingBlindAnnouncement = false
+    }
+  }
   renderUI()
 })
 
 btnReset.addEventListener('click', () => {
   stopTimer()
-  rounds      = DEFAULT_ROUNDS.map(r => ({ ...r }))
-  roundIndex  = 0
-  timeLeft    = rounds[0].minutes * 60
-  status      = 'idle'
+  rounds       = DEFAULT_ROUNDS.map(r => ({ ...r }))
+  roundIndex   = 0
+  timeLeft     = rounds[0].minutes * 60
+  status       = 'idle'
   warningFired = false
   gameNumber++
+  pendingBlindAnnouncement = true  // announce blinds on next Start, not now
   renderUI()
 })
 
@@ -232,7 +245,7 @@ btnNext.addEventListener('click', () => {
     roundIndex++
     timeLeft     = rounds[roundIndex].minutes * 60
     warningFired = false
-    if (status === 'running') announceIncrease()
+    pendingBlindAnnouncement = true  // announce on next Start, not immediately
     renderUI()
   }
 })

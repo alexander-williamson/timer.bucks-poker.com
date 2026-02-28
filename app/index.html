@@ -29,18 +29,19 @@
               <circle class="clock-progress" cx="100" cy="100" r="85" id="clock-progress"/>
             </svg>
             <div class="clock-inner">
+              <div class="clock-label">Current Blinds</div>
               <div class="clock-blinds">
                 <span id="small-blind">50</span><span class="slash">/</span><span id="big-blind">100</span>
               </div>
+              <div class="clock-label">Time Remaining</div>
               <div id="countdown">20:00</div>
               <div class="next-blinds" id="next-blinds">
                 Next: <span id="next-small">100</span>/<span id="next-big">200</span>
               </div>
               <div class="controls">
-                <button id="btn-start">Start</button>
-                <button id="btn-pause" disabled>Pause</button>
+                <button id="btn-start-pause" class="full-width">Start</button>
                 <button id="btn-reset">Reset</button>
-                <button id="btn-next">Next</button>
+                <button id="btn-next">Next Round</button>
               </div>
             </div>
           </div>
