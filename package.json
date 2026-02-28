@@ -1,0 +1,10 @@
+{
+  "name": "timer-bucks-poker-com",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd app && bun dev",
+    "build": "cd app && bun run build",
+    "preview": "cd app && bun run preview"
+  }
+}

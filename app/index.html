@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poker Blinds Timer</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+
+      <header>
+        <h1>Poker Blinds Timer</h1>
+        <div class="session-info">
+          Game <span id="game-number">1</span>
+          &nbsp;&bull;&nbsp;
+          Round <span id="round-number">1</span> of <span id="total-rounds">6</span>
+        </div>
+      </header>
+
+      <main>
+
+        <section class="timer-section">
+
+          <!-- Clock ring with blinds + countdown overlaid inside -->
+          <div class="clock-wrapper">
+            <svg class="clock-svg" viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="clock-track"    cx="100" cy="100" r="85"/>
+              <circle class="clock-progress" cx="100" cy="100" r="85" id="clock-progress"/>
+            </svg>
+            <div class="clock-inner">
+              <div class="clock-blinds">
+                <span id="small-blind">50</span><span class="slash">/</span><span id="big-blind">100</span>
+              </div>
+              <div id="countdown">20:00</div>
+              <div class="next-blinds" id="next-blinds">
+                Next: <span id="next-small">100</span>/<span id="next-big">200</span>
+              </div>
+              <div class="controls">
+                <button id="btn-start">Start</button>
+                <button id="btn-pause" disabled>Pause</button>
+                <button id="btn-reset">Reset</button>
+                <button id="btn-next">Next</button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <section class="rounds-section">
+          <table class="rounds-table">
+            <thead>
+              <tr><th>#</th><th>Small</th><th>Big</th><th>Minutes</th></tr>
+            </thead>
+            <tbody id="rounds-tbody"></tbody>
+          </table>
+        </section>
+
+      </main>
+
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

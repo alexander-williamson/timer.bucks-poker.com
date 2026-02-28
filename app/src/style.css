@@ -1,0 +1,239 @@
+/* ── Reset & base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Poker-table green background ────────────────────── */
+body {
+  min-height: 100vh;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #f0e6c8;
+  background:
+    radial-gradient(ellipse at 50% 40%, #2d6a30 0%, #1a4a1c 50%, #0d2e0e 100%);
+  background-attachment: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem;
+}
+
+/* Subtle felt texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.015) 0px,
+      rgba(255,255,255,0.015) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5d87a;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.session-info {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: #b8d4aa;
+  letter-spacing: 0.05em;
+}
+
+/* ── Card panels ──────────────────────────────────────── */
+section {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+/* ── Timer section ────────────────────────────────────── */
+.timer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* ── Clock ring ───────────────────────────────────────── */
+.clock-wrapper {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.clock-svg {
+  width: 340px;
+  height: 340px;
+  display: block;
+}
+
+.clock-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 10;
+}
+
+.clock-progress {
+  fill: none;
+  stroke: #4caf50;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 534.07;   /* 2π × 85 */
+  stroke-dashoffset: 0;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 1s linear, stroke 0.4s;
+}
+
+.clock-progress.warning {
+  stroke: #f57c00;
+}
+
+/* paused overrides warning (source order wins) */
+.clock-progress.paused {
+  stroke: #e53935;
+}
+
+/* ── Content inside the clock ring ───────────────────── */
+.clock-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 220px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* re-enable pointer events for buttons only */
+.clock-inner .controls { pointer-events: all; }
+
+.clock-blinds {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #f5d87a;
+  text-shadow: 0 2px 8px rgba(245, 216, 122, 0.4);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.slash {
+  margin: 0 0.1em;
+  color: #8fb88a;
+}
+
+#countdown {
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(255,255,255,0.25);
+  line-height: 1;
+}
+
+.next-blinds {
+  font-size: 0.78rem;
+  color: #8fb88a;
+  white-space: nowrap;
+}
+
+/* ── Controls — 2×2 grid inside the clock ring ────────── */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  width: 100%;
+  margin-top: 0.3rem;
+}
+
+button {
+  padding: 0.45rem 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  color: #fff;
+}
+
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+#btn-start { background: #2e7d32; }
+#btn-start:hover:not(:disabled) { background: #388e3c; }
+
+#btn-pause { background: #e65100; }
+#btn-pause:hover:not(:disabled) { background: #ef6c00; }
+
+#btn-reset { background: #37474f; }
+#btn-reset:hover:not(:disabled) { background: #455a64; }
+
+#btn-next  { background: #1565c0; }
+#btn-next:hover:not(:disabled)  { background: #1976d2; }
+
+/* ── Rounds table ─────────────────────────────────────── */
+.rounds-section { padding: 1rem 1.5rem; }
+
+.rounds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rounds-table th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  color: #8fb88a;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.rounds-table td {
+  padding: 0.5rem 0.5rem;
+  color: #d4e8cc;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.rounds-table tr.active td {
+  color: #f5d87a;
+  font-weight: 700;
+}
+
+.rounds-table tr.done td {
+  color: #4a6e47;
+  text-decoration: line-through;
+}
