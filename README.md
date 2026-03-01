@@ -76,6 +76,62 @@ bun run build
 bunx wrangler pages deploy --branch main
 ```
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                        GitHub                           │
+│                                                         │
+│  main branch ──push──► GitHub Actions                   │
+│                              │                          │
+│  pull request ──open──► CI (type-check + build)         │
+│                              │                          │
+│                         deploy job                      │
+│                         (build → wrangler deploy)       │
+└──────────────────────────────┼──────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────┐
+│                     Cloudflare                          │
+│                                                         │
+│  Cloudflare Pages ◄── wrangler pages deploy             │
+│       │                                                 │
+│       │  serves static files (app/dist/)                │
+│       ▼                                                 │
+│  timer.bucks-poker.com  ◄──  CNAME  ◄──  DNS zone       │
+│  (custom domain)               (bucks-poker.com)        │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Infrastructure** (Terraform, run once):
+- Creates the Cloudflare Pages project
+- Creates the `timer` CNAME record in the `bucks-poker.com` DNS zone
+- Attaches `timer.bucks-poker.com` as a custom domain on the Pages project
+
+## Build & deploy pipeline
+
+```
+Developer pushes to main
+        │
+        ▼
+GitHub Actions: deploy.yml
+  1. bun install            # root deps (wrangler)
+  2. bun install --cwd app  # app deps (vite, typescript)
+  3. bun run build          # tsc (type-check) → vite build → app/dist/
+  4. bunx wrangler pages deploy --branch main
+        │
+        ▼
+Cloudflare Pages serves app/dist/ at timer.bucks-poker.com
+```
+
+Pull requests run `ci.yml` which runs steps 1–3 only (no deploy).
+
+Secrets required in GitHub Actions:
+| Secret | Description |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Needs `Account:Pages:Edit`, `Zone:Zone:Read`, `Zone:DNS:Edit` |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
+
 ## Licensing & audio
 
 This is a private, non-commercial project. It is **not open source**. All rights reserved.
