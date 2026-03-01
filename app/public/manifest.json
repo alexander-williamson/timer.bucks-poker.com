@@ -1,0 +1,17 @@
+{
+  "name": "Poker Blinds Timer",
+  "short_name": "Blinds Timer",
+  "description": "Browser-based poker blinds timer with audio announcements",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d2e0e",
+  "theme_color": "#1a4a1c",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

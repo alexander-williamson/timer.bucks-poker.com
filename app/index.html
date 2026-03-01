@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Poker Blinds Timer</title>
     <link rel="stylesheet" href="/src/style.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1a4a1c" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   </head>
   <body>
     <div id="app">
@@ -59,7 +62,7 @@
           </div>
           <table class="rounds-table edit-table">
             <thead>
-              <tr><th>#</th><th>Small</th><th>Big</th><th>Min</th><th></th></tr>
+              <tr><th>#</th><th>Small</th><th>Big</th><th>Duration</th><th></th></tr>
             </thead>
             <tbody id="edit-tbody"></tbody>
           </table>
@@ -68,6 +71,35 @@
             <label for="voice-select">Voice</label>
             <select id="voice-select"></select>
             <button id="btn-voice-preview" title="Preview voice">▶</button>
+          </div>
+          <div class="sounds-section">
+            <div class="section-title">Sounds</div>
+
+            <div class="sound-group">
+              <div class="sound-group-label">Start of game blind level</div>
+              <label class="sound-option"><input type="checkbox" id="chk-speak-start"> Blind level voice announcement</label>
+            </div>
+
+            <div class="sound-group">
+              <div class="sound-group-label">One minute warning</div>
+              <label class="sound-option"><input type="checkbox" id="chk-warn-riff">  Play one minute warning guitar riff</label>
+              <label class="sound-option"><input type="checkbox" id="chk-warn-speak"> Blind level warning announcement</label>
+            </div>
+
+            <div class="sound-group">
+              <div class="sound-group-label">Blinds up</div>
+              <label class="sound-option"><input type="checkbox" id="chk-up-siren">  Play siren warning</label>
+              <label class="sound-option"><input type="checkbox" id="chk-up-speak">  Blind level voice announcement</label>
+            </div>
+
+            <div class="sound-group">
+              <div class="sound-group-label">Last 10 seconds</div>
+              <label class="sound-option"><input type="checkbox" id="chk-countdown-blip"> Blip each second</label>
+            </div>
+          </div>
+          <div class="game-section">
+            <div class="section-title">Game</div>
+            <label class="sound-option"><input type="checkbox" id="chk-endless-last"> Final round has no time limit</label>
           </div>
           <div class="edit-footer">
             <button id="btn-reset-config">Defaults</button>
@@ -78,5 +110,10 @@
 
     </div>
     <script type="module" src="/src/main.ts"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'))
+      }
+    </script>
   </body>
 </html>

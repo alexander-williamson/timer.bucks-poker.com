@@ -1,12 +1,14 @@
 This project is dedicated to a web application for a Poker Blinds Timer.
 
-Infrastructure
+## Infrastructure
 
 It will be hosted in Cloudflare using the free tier.
 
 Ways of working:
 - We use MILESTONES.md to organise the high level features
 - We use TODOS.md to break down the milestones into tasks
+
+The flow is a classic `plan` -> `to-do` -> `execute`
 
 We will plan the work for the milestones and add them to a TODOS.md file which will have a checklist so we can check the progress.
 

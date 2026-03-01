@@ -16,6 +16,7 @@ We will use `bun` for this project instead of `npm`.
 Single-page poker blinds timer with all core features running in the browser.
 
 ### Features
+- The title is "Poker Blinds Timer"
 - A green background with gentle fades to simulate a poker table
 - Start/Pause is a single toggle button, Reset and Next Round below it — all displayed inside the countdown circle
 - Configurable blind rounds (default: 50/100, 100/200, 200/400, 400/800, 800/1600, 1600/3200)
@@ -58,8 +59,14 @@ Single-page poker blinds timer with all core features running in the browser.
 - Save configuration to localStorage
 
 ## Milestone 4 - Polish
-- Responsive mobile layout
+- Responsive mobile layout: text inside the ring scales with `clamp()`/`vmin`; clock ring treated as decorative background on small screens (partial visibility acceptable); touch targets enlarged on coarse-pointer devices; landscape compacts the header to give the clock more vertical room
 - Buttons inside the clock ring must not visually touch the ring border
+
+## Milestone 8 - Additions
+
+- Option to play a blip sound every second during the last 10 seconds of a level (toggle in sound settings, default on)
+- Round duration edited as minutes and seconds (MM:SS) rather than fractional minutes
+- Edit table inputs validated with Zod; invalid fields show a red border; Save is blocked until all fields are valid
 
 ## Milestone 5 - Deploy
 - Cloudflare Pages deployment (wrangler / Git integration)

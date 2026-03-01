@@ -50,9 +50,45 @@
 - [x] Final round freezes at 0:00 instead of entering a dead "finished" state
 - [x] 1-minute warning uses ≤ 60 s check to survive skipped timer ticks (browser throttle)
 - [x] Timer as full-screen main focus; gear button opens settings overlay
-- [ ] Responsive mobile layout
+- [x] Maximise clock to fill available vw + vh (minus header)
+- [x] Responsive mobile layout
 
-## Milestone 5 — Deploy
+- [x] Text shadow on clock labels; transparent ring; muted paused red
 
-- [ ] Cloudflare Pages deployment (wrangler / Git integration)
-- [ ] PWA manifest + offline support
+## Milestone 5 — Sound Settings
+
+- [x] Move riff.mp3 and siren.mp3 to app/public/ for Vite static serving
+- [x] Sound settings section in settings overlay — 3 groups, all toggles default on, persisted to localStorage
+- [x] Add note to README that this is not an open source project - we don't know what the license of the sounds is but we are using this in a non-commercial way
+
+  **Start of game blind level**
+  - [x] Blind level voice announcement
+
+  **One minute warning**
+  - [x] Play one minute warning guitar riff (riff.mp3; speech fires on ended event)
+  - [x] Blind level warning announcement
+
+  **Blinds up**
+  - [x] Play siren warning (siren.mp3; speech fires on ended event)
+  - [x] New blind level voice announcement
+
+## Milestone 6 — Deploy
+
+- [x] Fix Terraform destination_dir (app/dist) and add GitHub source block for Git integration
+- [x] Add wrangler.toml for manual wrangler pages deploy
+- [x] Add terraform.tfvars.example documenting required variables
+- [x] PWA manifest.json (name, theme colour, display standalone)
+- [x] SVG app icon referenced in manifest
+- [x] Service worker for offline caching (pre-cache /, riff.mp3, siren.mp3; cache-first assets; network-first navigation)
+- [x] Register service worker in index.html
+- [x] Update README with deploy instructions (Terraform + wrangler)
+
+## Milestone 7 — Game Settings
+
+- [x] "Final round has no time limit" toggle in settings (default on) — timer keeps running at the last blind level indefinitely; when off, freezes at 0:00 (existing behaviour)
+
+## Milestone 8 — Additions
+
+- [x] Blip sound every second during last 10 seconds of a level — toggle in sound settings, default on
+- [x] Round duration edited as MM:SS (single text input, parser accepts M:SS / MM:SS / plain M for whole minutes) instead of fractional minutes
+- [x] Edit table validated with Zod — red border on invalid fields, Save blocked until all valid

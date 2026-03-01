@@ -103,8 +103,8 @@ section {
 }
 
 .clock-svg {
-  width: min(560px, 94vw);
-  height: min(560px, 94vw);
+  width: min(94vw, calc(100vh - 130px));
+  height: min(94vw, calc(100vh - 130px));
   display: block;
 }
 
@@ -116,7 +116,7 @@ section {
 
 .clock-progress {
   fill: none;
-  stroke: #4caf50;
+  stroke: rgba(76, 175, 80, 0.55);
   stroke-width: 10;
   stroke-linecap: round;
   stroke-dasharray: 534.07;   /* 2π × 85 */
@@ -127,12 +127,12 @@ section {
 }
 
 .clock-progress.warning {
-  stroke: #f57c00;
+  stroke: rgba(245, 124, 0, 0.55);
 }
 
 /* paused overrides warning (source order wins) */
 .clock-progress.paused {
-  stroke: #e53935;
+  stroke: rgba(160, 50, 50, 0.55);
 }
 
 /* ── Content inside the clock ring ───────────────────── */
@@ -144,8 +144,8 @@ section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.8rem;
-  width: min(340px, 58vw);
+  gap: clamp(0.3rem, 1.5vmin, 0.8rem);
+  width: min(57vw, calc(60.7vh - 79px));
   text-align: center;
   pointer-events: none;
 }
@@ -154,19 +154,20 @@ section {
 .clock-inner .controls { pointer-events: all; }
 
 .clock-label {
-  font-size: 0.65rem;
+  font-size: clamp(0.5rem, 1.6vmin, 0.65rem);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
   line-height: 1;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
 
 .clock-blinds + .clock-label {
-  margin-top: 0.8rem;
+  margin-top: clamp(0.3rem, 1.5vmin, 0.8rem);
 }
 
 .clock-blinds {
-  font-size: 2.4rem;
+  font-size: clamp(1.2rem, 9vmin, 2.4rem);
   font-weight: 700;
   color: #f5d87a;
   text-shadow: 0 2px 8px rgba(245, 216, 122, 0.4);
@@ -180,7 +181,7 @@ section {
 }
 
 #countdown {
-  font-size: 2.4rem;
+  font-size: clamp(1.2rem, 9vmin, 2.4rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
@@ -190,7 +191,7 @@ section {
 }
 
 .next-blinds {
-  font-size: 0.78rem;
+  font-size: clamp(0.6rem, 2.2vmin, 0.78rem);
   color: #8fb88a;
   white-space: nowrap;
 }
@@ -313,6 +314,22 @@ button:disabled   { opacity: 0.35; cursor: not-allowed; }
 #btn-cancel-config:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
 
 /* ── Edit table ────────────────────────────────────────── */
+.edit-table input.is-invalid {
+  border-color: rgba(229, 57, 53, 0.9) !important;
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.25);
+}
+
+.duration-input {
+  width: 4rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: #d4e8cc;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .edit-table input[type="number"] {
   width: 5rem;
   background: rgba(255,255,255,0.07);
@@ -363,6 +380,51 @@ button:disabled   { opacity: 0.35; cursor: not-allowed; }
   transition: background 0.15s;
 }
 #btn-add-level:hover { background: rgba(255,255,255,0.06); }
+
+/* ── Game / Sounds sections ────────────────────────────── */
+.sounds-section,
+.game-section {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.sounds-section .section-title,
+.game-section .section-title {
+  margin-bottom: 0.6rem;
+}
+
+.sound-group {
+  margin-top: 0.6rem;
+  padding-left: 0.25rem;
+}
+
+.sound-group-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 0.2rem;
+}
+
+.sound-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #d4e8cc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sound-option input[type="checkbox"] {
+  accent-color: #4caf50;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
 
 .edit-footer {
   display: flex;
@@ -468,4 +530,26 @@ button:disabled   { opacity: 0.35; cursor: not-allowed; }
 .rounds-table tr.done td {
   color: #4a6e47;
   text-decoration: line-through;
+}
+
+/* ── Responsive: touch targets ──────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  button {
+    padding: 0.65rem 0.25rem;
+    min-height: 2.75rem;
+  }
+}
+
+/* ── Responsive: landscape compact header ───────────────── */
+@media (max-height: 480px) {
+  header {
+    padding: 0.35rem 1rem 0;
+  }
+  header h1 {
+    font-size: 1.2rem;
+  }
+  .session-info {
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+  }
 }

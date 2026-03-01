@@ -1,11 +1,21 @@
 import './style.css'
+import { z } from 'zod'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface Round {
   small: number
   big: number
-  minutes: number
+  duration: number  // total seconds
+}
+
+interface SoundSettings {
+  speakStart:     boolean   // announce blinds at start of game/round
+  playWarnRiff:   boolean   // play riff.mp3 at 1-minute warning
+  warnSpeak:      boolean   // speak 1-minute warning
+  playSiren:      boolean   // play siren.mp3 when blinds go up
+  speakIncrease:  boolean   // speak when blinds go up
+  countdownBlip:  boolean   // blip each second in the last 10 seconds
 }
 
 type Status = 'idle' | 'running' | 'paused'
@@ -13,24 +23,37 @@ type Status = 'idle' | 'running' | 'paused'
 // ── Default config ───────────────────────────────────────────────────────────
 
 const DEFAULT_ROUNDS: Round[] = [
-  { small:   50, big:   100, minutes:  7 },
-  { small:  100, big:   200, minutes:  7 },
-  { small:  200, big:   400, minutes:  7 },
-  { small:  400, big:   800, minutes:  7 },
-  { small:  800, big:  1600, minutes: 15 },
-  { small: 1600, big:  3200, minutes: 15 },
+  { small:   50, big:   100, duration:  7 * 60 },
+  { small:  100, big:   200, duration:  7 * 60 },
+  { small:  200, big:   400, duration:  7 * 60 },
+  { small:  400, big:   800, duration:  7 * 60 },
+  { small:  800, big:  1600, duration: 15 * 60 },
+  { small: 1600, big:  3200, duration: 15 * 60 },
 ]
 
 // ── State ────────────────────────────────────────────────────────────────────
 
 let rounds: Round[]           = DEFAULT_ROUNDS.map(r => ({ ...r }))
 let roundIndex: number        = 0
-let timeLeft: number          = rounds[0].minutes * 60
+let timeLeft: number          = rounds[0].duration
 let status: Status            = 'idle'
 let gameNumber: number        = 1
 let warningFired: boolean     = false
 let intervalId: number | null = null
 let pendingBlindAnnouncement: boolean = true
+
+// Game settings
+let endlessLastRound = true
+
+// Sound settings
+let soundSettings: SoundSettings = {
+  speakStart:    true,
+  playWarnRiff:  true,
+  warnSpeak:     true,
+  playSiren:     true,
+  speakIncrease: true,
+  countdownBlip: true,
+}
 
 // Edit-mode working copy
 let editRounds: Round[] = []
@@ -65,7 +88,19 @@ const btnResetConfig    = document.getElementById('btn-reset-config')     as HTM
 const btnAddLevel       = document.getElementById('btn-add-level')        as HTMLButtonElement
 const btnVoicePreview   = document.getElementById('btn-voice-preview')    as HTMLButtonElement
 
+const chkEndlessLast = document.getElementById('chk-endless-last') as HTMLInputElement
+
+const chkSpeakStart    = document.getElementById('chk-speak-start')    as HTMLInputElement
+const chkWarnRiff      = document.getElementById('chk-warn-riff')      as HTMLInputElement
+const chkWarnSpeak     = document.getElementById('chk-warn-speak')     as HTMLInputElement
+const chkUpSiren       = document.getElementById('chk-up-siren')       as HTMLInputElement
+const chkUpSpeak       = document.getElementById('chk-up-speak')       as HTMLInputElement
+const chkCountdownBlip = document.getElementById('chk-countdown-blip') as HTMLInputElement
+
 // ── Audio ────────────────────────────────────────────────────────────────────
+
+const audioRiff  = new Audio('/riff.mp3')
+const audioSiren = new Audio('/siren.mp3')
 
 const audioCtx = new AudioContext()
 
@@ -90,6 +125,10 @@ function playStart() {
 
 function playPause() {
   playTone(440, 0.4)                            // A4
+}
+
+function playBlip() {
+  playTone(880, 0.08, 0.2)                      // A5, short
 }
 
 // ── Speech ───────────────────────────────────────────────────────────────────
@@ -117,13 +156,10 @@ function populateVoices() {
     if (selectedVoice) savedVoiceName = null
   }
 
-  const langLabel = (lang: string) => lang === 'en-US' ? 'American' : 'British'
+  // Strip any "English (Locale)+" or bare "English (Locale)" prefix
   const friendlyName = (v: SpeechSynthesisVoice) => {
-    const name = v.name
-      .replace(/^English \(United States\)\+/i, '')
-      .replace(/^English \(United Kingdom\)\+/i, '')
-      .replace(/^English \(America\)\+/i, '')
-    return `${name} (${langLabel(v.lang)})`
+    const stripped = v.name.replace(/^English \([^)]+\)\+?/i, '').trim()
+    return stripped || '(Default)'
   }
 
   elVoiceSelect.innerHTML = ''
@@ -136,10 +172,21 @@ function populateVoices() {
     'en-US': Object.assign(document.createElement('optgroup'), { label: 'American' }),
     'en-GB': Object.assign(document.createElement('optgroup'), { label: 'British'  }),
   }
-  availableVoices.forEach((v, i) => {
+
+  // Sort alphabetically within each group; push nameless "(Default)" entries to the bottom
+  const entries = availableVoices
+    .map((v, i) => ({ v, i, label: friendlyName(v) }))
+    .sort((a, b) => {
+      const aDefault = a.label === '(Default)'
+      const bDefault = b.label === '(Default)'
+      if (aDefault !== bDefault) return aDefault ? 1 : -1
+      return a.label.localeCompare(b.label)
+    })
+
+  entries.forEach(({ v, i, label }) => {
     const opt = document.createElement('option')
     opt.value = String(i)
-    opt.textContent = friendlyName(v)
+    opt.textContent = label
     if (v.name === selectedVoice?.name) opt.selected = true
     groups[v.lang]?.appendChild(opt)
   })
@@ -169,6 +216,7 @@ function speakPreview() {
 }
 
 function announceCurrentBlinds() {
+  if (!soundSettings.speakStart) return
   const cur = rounds[roundIndex]
   speak(`Blinds are ${cur.small} and ${cur.big}.`)
 }
@@ -176,12 +224,37 @@ function announceCurrentBlinds() {
 function announceWarning() {
   const next = rounds[roundIndex + 1]
   if (!next) return
-  speak(`Attention. Blinds are going up to ${next.small} and ${next.big} in one minute.`)
+  const doSpeak = () => {
+    if (soundSettings.warnSpeak) {
+      // Read timeLeft at speech time — accurate even after the riff has played
+      const t = timeLeft
+      const timePhrase = t >= 60 ? 'one minute' : `${t} seconds`
+      speak(`Attention. Blinds are going up to ${next.small} and ${next.big} in ${timePhrase}.`)
+    }
+  }
+  if (soundSettings.playWarnRiff) {
+    audioRiff.currentTime = 0
+    audioRiff.play().catch(() => {})
+    audioRiff.addEventListener('ended', doSpeak, { once: true })
+  } else {
+    doSpeak()
+  }
 }
 
 function announceIncrease() {
-  const cur = rounds[roundIndex]
-  speak(`Blinds have increased to ${cur.small} and ${cur.big}.`)
+  const doSpeak = () => {
+    if (soundSettings.speakIncrease) {
+      const cur = rounds[roundIndex]
+      speak(`Blinds have increased to ${cur.small} and ${cur.big}.`)
+    }
+  }
+  if (soundSettings.playSiren) {
+    audioSiren.currentTime = 0
+    audioSiren.play().catch(() => {})
+    audioSiren.addEventListener('ended', doSpeak, { once: true })
+  } else {
+    doSpeak()
+  }
 }
 
 // ── LocalStorage ─────────────────────────────────────────────────────────────
@@ -192,6 +265,8 @@ function saveConfig() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     rounds,
     voiceName: selectedVoice?.name ?? null,
+    soundSettings,
+    endlessLastRound,
   }))
 }
 
@@ -201,10 +276,18 @@ function loadConfig() {
     if (!raw) return
     const cfg = JSON.parse(raw)
     if (Array.isArray(cfg.rounds) && cfg.rounds.length > 0) {
-      rounds   = cfg.rounds.map((r: Round) => ({ ...r }))
-      timeLeft = rounds[0].minutes * 60
+      rounds   = cfg.rounds.map((r: any) => ({
+        small:    r.small,
+        big:      r.big,
+        duration: r.duration ?? Math.round((r.minutes ?? 7) * 60),
+      }))
+      timeLeft = rounds[0].duration
     }
     if (cfg.voiceName) savedVoiceName = cfg.voiceName
+    if (cfg.soundSettings && typeof cfg.soundSettings === 'object') {
+      Object.assign(soundSettings, cfg.soundSettings)
+    }
+    if (typeof cfg.endlessLastRound === 'boolean') endlessLastRound = cfg.endlessLastRound
   } catch {}
 }
 
@@ -216,11 +299,37 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+/** Format a duration (seconds) as M:SS for the edit input */
+function formatDuration(secs: number): string {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+/** Parse "M:SS" or "MM:SS" or plain "M" (treated as whole minutes) → seconds.
+ *  Returns null if the string is not a recognisable, valid time. */
+function parseDuration(str: string): number | null {
+  const colonMatch = str.trim().match(/^(\d{1,3}):(\d{1,2})$/)
+  if (colonMatch) {
+    const m = parseInt(colonMatch[1], 10)
+    const s = parseInt(colonMatch[2], 10)
+    if (s > 59) return null
+    const total = m * 60 + s
+    return total > 0 ? total : null
+  }
+  const minOnly = str.trim().match(/^(\d{1,3})$/)
+  if (minOnly) {
+    const m = parseInt(minOnly[1], 10)
+    return m > 0 ? m * 60 : null
+  }
+  return null
+}
+
 
 function renderUI() {
   const cur   = rounds[roundIndex]
   const next  = rounds[roundIndex + 1]
-  const total = cur.minutes * 60
+  const total = cur.duration
 
   elGameNumber.textContent  = String(gameNumber)
   elRoundNumber.textContent = String(roundIndex + 1)
@@ -246,15 +355,41 @@ function renderUI() {
 
   // Buttons
   const isRunning        = status === 'running'
-  const lastRoundDone    = roundIndex >= rounds.length - 1 && timeLeft === 0
+  const lastRoundDone    = !endlessLastRound && roundIndex >= rounds.length - 1 && timeLeft === 0
   btnStartPause.disabled    = lastRoundDone
   btnStartPause.textContent = isRunning ? 'Pause' : status === 'paused' ? 'Resume' : 'Start'
   btnStartPause.classList.toggle('running', isRunning)
   btnPrev.disabled       = isRunning || roundIndex === 0
-  const nothingToReset   = status === 'idle' && roundIndex === 0 && timeLeft === rounds[0].minutes * 60
+  const nothingToReset   = status === 'idle' && roundIndex === 0 && timeLeft === rounds[0].duration
   btnReset.disabled      = isRunning || nothingToReset
   btnNext.disabled       = roundIndex >= rounds.length - 1
   btnEditConfig.disabled = isRunning
+}
+
+// ── Validation ───────────────────────────────────────────────────────────────
+
+const blindSchema    = z.coerce.number().int().min(1)
+const durationSchema = z.string().refine(val => parseDuration(val) !== null, { message: 'Use M:SS' })
+
+function validateInput(inp: HTMLInputElement): boolean {
+  const field = inp.dataset.field
+  let valid = true
+  if (field === 'small' || field === 'big') {
+    valid = blindSchema.safeParse(inp.value).success
+  } else if (field === 'duration') {
+    valid = durationSchema.safeParse(inp.value).success
+  }
+  inp.classList.toggle('is-invalid', !valid)
+  return valid
+}
+
+function validateAllEditInputs(): boolean {
+  const inputs = Array.from(elEditTbody.querySelectorAll<HTMLInputElement>('input[data-field]'))
+  return inputs.map(validateInput).every(Boolean)
+}
+
+function syncSaveBtn() {
+  btnSaveConfig.disabled = elEditTbody.querySelector('input.is-invalid') !== null
 }
 
 // ── Edit mode ────────────────────────────────────────────────────────────────
@@ -265,9 +400,9 @@ function renderEditTable() {
     const tr = document.createElement('tr')
     tr.innerHTML = `
       <td>${i + 1}</td>
-      <td><input type="number" min="1" value="${r.small}"   data-field="small"   data-idx="${i}"></td>
-      <td><input type="number" min="1" value="${r.big}"     data-field="big"     data-idx="${i}"></td>
-      <td><input type="number" min="1" value="${r.minutes}" data-field="minutes" data-idx="${i}"></td>
+      <td><input type="number" min="1" value="${r.small}" data-field="small" data-idx="${i}"></td>
+      <td><input type="number" min="1" value="${r.big}"   data-field="big"   data-idx="${i}"></td>
+      <td><input type="text" class="duration-input" value="${formatDuration(r.duration)}" data-field="duration" data-idx="${i}" placeholder="M:SS"></td>
       <td class="row-actions">
         <button class="btn-row-action" data-action="up"     data-idx="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
         <button class="btn-row-action" data-action="down"   data-idx="${i}" ${i === editRounds.length - 1 ? 'disabled' : ''}>↓</button>
@@ -275,19 +410,33 @@ function renderEditTable() {
       </td>`
     elEditTbody.appendChild(tr)
   })
+  syncSaveBtn()
 }
 
 function flushEditInputs() {
   elEditTbody.querySelectorAll<HTMLInputElement>('input[data-idx]').forEach(inp => {
     const idx   = Number(inp.dataset.idx)
-    const field = inp.dataset.field as keyof Round
-    editRounds[idx][field] = Math.max(1, Number(inp.value) || 1)
+    const field = inp.dataset.field
+    if (field === 'small' || field === 'big') {
+      editRounds[idx][field] = Math.max(1, Number(inp.value) || 1)
+    } else if (field === 'duration') {
+      const parsed = parseDuration(inp.value)
+      if (parsed !== null) editRounds[idx].duration = parsed
+      // if invalid, leave the existing value unchanged
+    }
   })
 }
 
 function openEditMode() {
   editRounds = rounds.map(r => ({ ...r }))
   renderEditTable()
+  chkEndlessLast.checked = endlessLastRound
+  chkSpeakStart.checked    = soundSettings.speakStart
+  chkWarnRiff.checked      = soundSettings.playWarnRiff
+  chkWarnSpeak.checked     = soundSettings.warnSpeak
+  chkUpSiren.checked       = soundSettings.playSiren
+  chkUpSpeak.checked       = soundSettings.speakIncrease
+  chkCountdownBlip.checked = soundSettings.countdownBlip
   elSettingsOverlay.hidden = false
 }
 
@@ -300,23 +449,28 @@ function closeEditMode() {
 function tick() {
   if (timeLeft > 0) {
     timeLeft--
-    if (timeLeft <= 60 && !warningFired && roundIndex < rounds.length - 1) {
+    if (timeLeft <= 60 && !warningFired && roundIndex < rounds.length - 1 && rounds[roundIndex].duration > 60) {
       warningFired = true
       announceWarning()
     }
+    const isLastRound = roundIndex >= rounds.length - 1
+    if (timeLeft >= 1 && timeLeft <= 10 && soundSettings.countdownBlip && !(isLastRound && endlessLastRound)) {
+      playBlip()
+    }
   } else if (roundIndex < rounds.length - 1) {
     advanceRound()
-  } else {
-    // Final round has run out — freeze at 0:00
+  } else if (!endlessLastRound) {
+    // Final round has run out and endless mode is off — freeze at 0:00
     stopTimer()
     status = 'paused'
   }
+  // else: endless last round — keep running at 0:00
   renderUI()
 }
 
 function advanceRound() {
   roundIndex++
-  timeLeft     = rounds[roundIndex].minutes * 60
+  timeLeft     = rounds[roundIndex].duration
   warningFired = false
   announceIncrease()
 }
@@ -356,7 +510,7 @@ btnStartPause.addEventListener('click', () => {
 btnPrev.addEventListener('click', () => {
   if (roundIndex > 0) {
     roundIndex--
-    timeLeft     = rounds[roundIndex].minutes * 60
+    timeLeft     = rounds[roundIndex].duration
     warningFired = false
     pendingBlindAnnouncement = true
     renderUI()
@@ -366,7 +520,7 @@ btnPrev.addEventListener('click', () => {
 btnReset.addEventListener('click', () => {
   stopTimer()
   roundIndex   = 0
-  timeLeft     = rounds[0].minutes * 60
+  timeLeft     = rounds[0].duration
   status       = 'idle'
   warningFired = false
   gameNumber++
@@ -377,7 +531,7 @@ btnReset.addEventListener('click', () => {
 btnNext.addEventListener('click', () => {
   if (roundIndex < rounds.length - 1) {
     roundIndex++
-    timeLeft     = rounds[roundIndex].minutes * 60
+    timeLeft     = rounds[roundIndex].duration
     warningFired = false
     pendingBlindAnnouncement = true
     renderUI()
@@ -391,13 +545,23 @@ btnCancelConfig.addEventListener('click', closeEditMode)
 btnResetConfig.addEventListener('click', () => {
   editRounds = DEFAULT_ROUNDS.map(r => ({ ...r }))
   renderEditTable()
+  endlessLastRound       = true
+  chkEndlessLast.checked = endlessLastRound
+  soundSettings = { speakStart: true, playWarnRiff: true, warnSpeak: true, playSiren: true, speakIncrease: true, countdownBlip: true }
+  chkSpeakStart.checked    = soundSettings.speakStart
+  chkWarnRiff.checked      = soundSettings.playWarnRiff
+  chkWarnSpeak.checked     = soundSettings.warnSpeak
+  chkUpSiren.checked       = soundSettings.playSiren
+  chkUpSpeak.checked       = soundSettings.speakIncrease
+  chkCountdownBlip.checked = soundSettings.countdownBlip
 })
 
 btnSaveConfig.addEventListener('click', () => {
+  if (!validateAllEditInputs()) return
   flushEditInputs()
   rounds     = editRounds.map(r => ({ ...r }))
   roundIndex = 0
-  timeLeft   = rounds[0].minutes * 60
+  timeLeft   = rounds[0].duration
   status     = 'idle'
   warningFired = false
   pendingBlindAnnouncement = true
@@ -409,8 +573,13 @@ btnSaveConfig.addEventListener('click', () => {
 btnAddLevel.addEventListener('click', () => {
   flushEditInputs()
   const last = editRounds[editRounds.length - 1]
-  editRounds.push({ small: last.small * 2, big: last.big * 2, minutes: last.minutes })
+  editRounds.push({ small: last.small * 2, big: last.big * 2, duration: last.duration })
   renderEditTable()
+})
+
+elEditTbody.addEventListener('input', e => {
+  const inp = (e.target as Element).closest<HTMLInputElement>('input[data-field]')
+  if (inp) { validateInput(inp); syncSaveBtn() }
 })
 
 elEditTbody.addEventListener('click', e => {
@@ -435,6 +604,15 @@ elVoiceSelect.addEventListener('change', () => {
   saveConfig()
   speakPreview()
 })
+
+chkEndlessLast.addEventListener('change', () => { endlessLastRound = chkEndlessLast.checked; saveConfig() })
+
+chkSpeakStart.addEventListener('change', () => { soundSettings.speakStart    = chkSpeakStart.checked; saveConfig() })
+chkWarnRiff.addEventListener('change',   () => { soundSettings.playWarnRiff  = chkWarnRiff.checked;   saveConfig() })
+chkWarnSpeak.addEventListener('change',  () => { soundSettings.warnSpeak     = chkWarnSpeak.checked;  saveConfig() })
+chkUpSiren.addEventListener('change',    () => { soundSettings.playSiren     = chkUpSiren.checked;    saveConfig() })
+chkUpSpeak.addEventListener('change',         () => { soundSettings.speakIncrease = chkUpSpeak.checked;         saveConfig() })
+chkCountdownBlip.addEventListener('change',   () => { soundSettings.countdownBlip = chkCountdownBlip.checked;   saveConfig() })
 
 btnVoicePreview.addEventListener('click', () => {
   if (window.speechSynthesis.speaking) {
