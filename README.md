@@ -78,29 +78,22 @@ bunx wrangler pages deploy --branch main
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                        GitHub                           │
-│                                                         │
-│  main branch ──push──► GitHub Actions                   │
-│                              │                          │
-│  pull request ──open──► CI (type-check + build)         │
-│                              │                          │
-│                         deploy job                      │
-│                         (build → wrangler deploy)       │
-└──────────────────────────────┼──────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────┐
-│                     Cloudflare                          │
-│                                                         │
-│  Cloudflare Pages ◄── wrangler pages deploy             │
-│       │                                                 │
-│       │  serves static files (app/dist/)                │
-│       ▼                                                 │
-│  timer.bucks-poker.com  ◄──  CNAME  ◄──  DNS zone       │
-│  (custom domain)               (bucks-poker.com)        │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph gh[GitHub]
+        PR[Pull Request] -->|triggers| CI[CI workflow\ntype-check + build]
+        PUSH[Push to main] -->|triggers| DW[Deploy workflow\nbuild + wrangler deploy]
+    end
+
+    subgraph cf[Cloudflare]
+        PAGES[Cloudflare Pages\nserves app/dist/]
+        DNS[DNS Zone\nbucks-poker.com]
+        DOMAIN[timer.bucks-poker.com]
+    end
+
+    DW -->|wrangler pages deploy| PAGES
+    DNS -->|CNAME| DOMAIN
+    DOMAIN --> PAGES
 ```
 
 **Infrastructure** (Terraform, run once):
@@ -110,18 +103,15 @@ bunx wrangler pages deploy --branch main
 
 ## Build & deploy pipeline
 
-```
-Developer pushes to main
-        │
-        ▼
-GitHub Actions: deploy.yml
-  1. bun install            # root deps (wrangler)
-  2. bun install --cwd app  # app deps (vite, typescript)
-  3. bun run build          # tsc (type-check) → vite build → app/dist/
-  4. bunx wrangler pages deploy --branch main
-        │
-        ▼
-Cloudflare Pages serves app/dist/ at timer.bucks-poker.com
+```mermaid
+flowchart TD
+    A[Push to main] --> B[bun install\nroot deps]
+    B --> C[bun install --cwd app\napp deps]
+    C --> D[bun run build\ntsc + vite build → app/dist/]
+    D --> E[bunx wrangler pages deploy --branch main]
+    E --> F[timer.bucks-poker.com updated]
+
+    style F fill:#2d6a2d,color:#fff
 ```
 
 Pull requests run `ci.yml` which runs steps 1–3 only (no deploy).
