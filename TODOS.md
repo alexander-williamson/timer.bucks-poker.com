@@ -97,3 +97,4 @@
 - [x] Blip sound every second during last 10 seconds of a level — toggle in sound settings, default on
 - [x] Round duration edited as MM:SS (single text input, parser accepts M:SS / MM:SS / plain M for whole minutes) instead of fractional minutes
 - [x] Edit table validated with Zod — red border on invalid fields, Save blocked until all valid
+- [x] Last 10 seconds countdown mode — radio choice between Off / Blip each second / Use voice for countdown (migrates old countdownBlip boolean)

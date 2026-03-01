@@ -15,7 +15,7 @@ interface SoundSettings {
   warnSpeak:      boolean   // speak 1-minute warning
   playSiren:      boolean   // play siren.mp3 when blinds go up
   speakIncrease:  boolean   // speak when blinds go up
-  countdownBlip:  boolean   // blip each second in the last 10 seconds
+  countdownMode:  'off' | 'blip' | 'voice'  // last-10-seconds behaviour
 }
 
 type Status = 'idle' | 'running' | 'paused'
@@ -52,7 +52,7 @@ let soundSettings: SoundSettings = {
   warnSpeak:     true,
   playSiren:     true,
   speakIncrease: true,
-  countdownBlip: true,
+  countdownMode: 'blip',
 }
 
 // Edit-mode working copy
@@ -95,7 +95,9 @@ const chkWarnRiff      = document.getElementById('chk-warn-riff')      as HTMLIn
 const chkWarnSpeak     = document.getElementById('chk-warn-speak')     as HTMLInputElement
 const chkUpSiren       = document.getElementById('chk-up-siren')       as HTMLInputElement
 const chkUpSpeak       = document.getElementById('chk-up-speak')       as HTMLInputElement
-const chkCountdownBlip = document.getElementById('chk-countdown-blip') as HTMLInputElement
+const rdoCountdownOff   = document.getElementById('rdo-countdown-off')   as HTMLInputElement
+const rdoCountdownBlip  = document.getElementById('rdo-countdown-blip')  as HTMLInputElement
+const rdoCountdownVoice = document.getElementById('rdo-countdown-voice') as HTMLInputElement
 
 // ── Audio ────────────────────────────────────────────────────────────────────
 
@@ -285,7 +287,13 @@ function loadConfig() {
     }
     if (cfg.voiceName) savedVoiceName = cfg.voiceName
     if (cfg.soundSettings && typeof cfg.soundSettings === 'object') {
-      Object.assign(soundSettings, cfg.soundSettings)
+      const s = cfg.soundSettings
+      // migrate old countdownBlip boolean → countdownMode
+      if ('countdownBlip' in s && !('countdownMode' in s)) {
+        s.countdownMode = s.countdownBlip ? 'blip' : 'off'
+        delete s.countdownBlip
+      }
+      Object.assign(soundSettings, s)
     }
     if (typeof cfg.endlessLastRound === 'boolean') endlessLastRound = cfg.endlessLastRound
   } catch {}
@@ -436,7 +444,9 @@ function openEditMode() {
   chkWarnSpeak.checked     = soundSettings.warnSpeak
   chkUpSiren.checked       = soundSettings.playSiren
   chkUpSpeak.checked       = soundSettings.speakIncrease
-  chkCountdownBlip.checked = soundSettings.countdownBlip
+  rdoCountdownOff.checked   = soundSettings.countdownMode === 'off'
+  rdoCountdownBlip.checked  = soundSettings.countdownMode === 'blip'
+  rdoCountdownVoice.checked = soundSettings.countdownMode === 'voice'
   elSettingsOverlay.hidden = false
 }
 
@@ -454,8 +464,12 @@ function tick() {
       announceWarning()
     }
     const isLastRound = roundIndex >= rounds.length - 1
-    if (timeLeft >= 1 && timeLeft <= 10 && soundSettings.countdownBlip && !(isLastRound && endlessLastRound)) {
-      playBlip()
+    if (timeLeft >= 1 && timeLeft <= 10 && soundSettings.countdownMode !== 'off' && !(isLastRound && endlessLastRound)) {
+      if (soundSettings.countdownMode === 'blip') {
+        playBlip()
+      } else {
+        speak(String(timeLeft))
+      }
     }
   } else if (roundIndex < rounds.length - 1) {
     advanceRound()
@@ -547,13 +561,15 @@ btnResetConfig.addEventListener('click', () => {
   renderEditTable()
   endlessLastRound       = true
   chkEndlessLast.checked = endlessLastRound
-  soundSettings = { speakStart: true, playWarnRiff: true, warnSpeak: true, playSiren: true, speakIncrease: true, countdownBlip: true }
+  soundSettings = { speakStart: true, playWarnRiff: true, warnSpeak: true, playSiren: true, speakIncrease: true, countdownMode: 'blip' }
   chkSpeakStart.checked    = soundSettings.speakStart
   chkWarnRiff.checked      = soundSettings.playWarnRiff
   chkWarnSpeak.checked     = soundSettings.warnSpeak
   chkUpSiren.checked       = soundSettings.playSiren
   chkUpSpeak.checked       = soundSettings.speakIncrease
-  chkCountdownBlip.checked = soundSettings.countdownBlip
+  rdoCountdownOff.checked   = false
+  rdoCountdownBlip.checked  = true
+  rdoCountdownVoice.checked = false
 })
 
 btnSaveConfig.addEventListener('click', () => {
@@ -612,7 +628,9 @@ chkWarnRiff.addEventListener('change',   () => { soundSettings.playWarnRiff  = c
 chkWarnSpeak.addEventListener('change',  () => { soundSettings.warnSpeak     = chkWarnSpeak.checked;  saveConfig() })
 chkUpSiren.addEventListener('change',    () => { soundSettings.playSiren     = chkUpSiren.checked;    saveConfig() })
 chkUpSpeak.addEventListener('change',         () => { soundSettings.speakIncrease = chkUpSpeak.checked;         saveConfig() })
-chkCountdownBlip.addEventListener('change',   () => { soundSettings.countdownBlip = chkCountdownBlip.checked;   saveConfig() })
+rdoCountdownOff.addEventListener('change',   () => { soundSettings.countdownMode = 'off';   saveConfig() })
+rdoCountdownBlip.addEventListener('change',  () => { soundSettings.countdownMode = 'blip';  saveConfig() })
+rdoCountdownVoice.addEventListener('change', () => { soundSettings.countdownMode = 'voice'; saveConfig() })
 
 btnVoicePreview.addEventListener('click', () => {
   if (window.speechSynthesis.speaking) {
