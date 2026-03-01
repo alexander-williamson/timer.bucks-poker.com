@@ -82,6 +82,7 @@
 - [x] Service worker for offline caching (pre-cache /, riff.mp3, siren.mp3; cache-first assets; network-first navigation)
 - [x] Register service worker in index.html
 - [x] Update README with deploy instructions (Terraform + wrangler)
+- [x] Replace deploy.sh with deploy.ts (Bun TypeScript script using wrangler; reads secrets from env vars)
 
 ## Milestone 7 — Game Settings
 
