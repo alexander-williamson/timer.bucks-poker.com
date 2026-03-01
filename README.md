@@ -81,13 +81,13 @@ bunx wrangler pages deploy --branch main
 ```mermaid
 flowchart TD
     subgraph gh[GitHub]
-        PR[Pull Request] -->|triggers| CI[CI workflow\ntype-check + build]
-        PUSH[Push to main] -->|triggers| DW[Deploy workflow\nbuild + wrangler deploy]
+        PR[Pull Request] -->|triggers| CI[CI workflow<br/>type-check + build]
+        PUSH[Push to main] -->|triggers| DW[Deploy workflow<br/>build + wrangler deploy]
     end
 
     subgraph cf[Cloudflare]
-        PAGES[Cloudflare Pages\nserves app/dist/]
-        DNS[DNS Zone\nbucks-poker.com]
+        PAGES[Cloudflare Pages<br/>serves app/dist/]
+        DNS[DNS Zone<br/>bucks-poker.com]
         DOMAIN[timer.bucks-poker.com]
     end
 
@@ -105,9 +105,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Push to main] --> B[bun install\nroot deps]
-    B --> C[bun install --cwd app\napp deps]
-    C --> D[bun run build\ntsc + vite build → app/dist/]
+    A[Push to main] --> B[bun install<br/>root deps]
+    B --> C[bun install --cwd app<br/>app deps]
+    C --> D[bun run build<br/>tsc + vite build → app/dist/]
     D --> E[bunx wrangler pages deploy --branch main]
     E --> F[timer.bucks-poker.com updated]
 
