@@ -73,6 +73,7 @@ Single-page poker blinds timer with all core features running in the browser.
 - PWA manifest, SVG icon, service worker for offline caching
 - Terraform infrastructure for Cloudflare Pages project
 - Custom domain `timer.bucks-poker.com` via `cloudflare_pages_domain` + CNAME record (zone looked up via data block)
+- GitHub Actions: CI workflow (type-check + build on PRs), deploy workflow (build + wrangler deploy on push to main)
 
 ## Milestone 7 - Game Settings
 - "Final round has no time limit" toggle (default on) — timer keeps running at the last blind level indefinitely; when off, freezes at 0:00

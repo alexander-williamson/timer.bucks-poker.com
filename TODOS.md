@@ -85,6 +85,8 @@
 - [x] Deploy via `bunx wrangler pages deploy --branch main` (removed deploy.ts — not needed)
 - [x] Custom domain `timer.bucks-poker.com` — `cloudflare_pages_domain` + `cloudflare_record` CNAME via data block zone lookup
 - [x] Purge accidentally committed Terraform files (.terraform/, tfstate, .tfvars) from git history
+- [x] GitHub Actions CI workflow — type-check + build on pull requests
+- [x] GitHub Actions deploy workflow — build + wrangler deploy on push to main
 
 ## Milestone 7 — Game Settings
 
