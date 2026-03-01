@@ -1,5 +1,7 @@
 # timer.bucks-poker.com
 
+**Production:** [timer.bucks-poker.com](https://timer.bucks-poker.com)
+
 A browser-based poker blinds timer. Runs entirely client-side — no server required.
 
 ## Features
