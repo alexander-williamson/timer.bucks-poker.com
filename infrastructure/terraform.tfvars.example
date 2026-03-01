@@ -1,4 +1,2 @@
-cloudflare_api_token  = "your-cloudflare-api-token"   # needs Pages:Edit permission
+cloudflare_api_token  = "your-cloudflare-api-token"   # needs: Account:Pages:Edit, Zone:Zone:Read, Zone:DNS:Edit
 cloudflare_account_id = "your-cloudflare-account-id"
-github_owner          = "your-github-username-or-org"
-github_repo           = "timer.bucks-poker.com"
