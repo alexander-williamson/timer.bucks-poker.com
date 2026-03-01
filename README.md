@@ -73,7 +73,7 @@ Cloudflare Pages will then build and deploy automatically on every push to `main
 
 ```bash
 bun run build
-npx wrangler pages deploy app/dist --project-name timer-bucks-poker-com
+bunx wrangler pages deploy --branch main
 ```
 
 ## Licensing & audio

@@ -62,11 +62,22 @@ Single-page poker blinds timer with all core features running in the browser.
 - Responsive mobile layout: text inside the ring scales with `clamp()`/`vmin`; clock ring treated as decorative background on small screens (partial visibility acceptable); touch targets enlarged on coarse-pointer devices; landscape compacts the header to give the clock more vertical room
 - Buttons inside the clock ring must not visually touch the ring border
 
-## Milestone 8 - Additions
+## Milestone 5 - Sound Settings
+- Sound settings section in settings overlay — 3 groups (start of game, one minute warning, blinds up), all toggles default on, persisted to localStorage
+- Start of game: blind level voice announcement
+- One minute warning: guitar riff (riff.mp3) then voice announcement
+- Blinds up: siren (siren.mp3) then voice announcement
 
+## Milestone 6 - Deploy
+- Cloudflare Pages deployment via `bunx wrangler pages deploy --branch main`
+- PWA manifest, SVG icon, service worker for offline caching
+- Terraform infrastructure for Cloudflare Pages project
+- Custom domain `timer.bucks-poker.com` via `cloudflare_pages_domain` + CNAME record (zone looked up via data block)
+
+## Milestone 7 - Game Settings
+- "Final round has no time limit" toggle (default on) — timer keeps running at the last blind level indefinitely; when off, freezes at 0:00
+
+## Milestone 8 - Additions
 - Option to play a blip sound every second during the last 10 seconds of a level (toggle in sound settings, default on)
 - Round duration edited as minutes and seconds (MM:SS) rather than fractional minutes
 - Edit table inputs validated with Zod; invalid fields show a red border; Save is blocked until all fields are valid
-
-## Milestone 5 - Deploy
-- Cloudflare Pages deployment (wrangler / Git integration)
